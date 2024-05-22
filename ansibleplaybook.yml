@@ -4,10 +4,13 @@
   vars:
     # Custom CA certificates
     custom_ca_certificates:
-      - name: my_custom_ca_1.crt
-        src: /path/to/my_custom_ca_1.crt
-      - name: my_custom_ca_2.crt
-        src: /path/to/my_custom_ca_2.crt
+      - name: Ca_1.crt
+        src: Pythonansible_project/CA1.crt
+      - name: Ca_2.crt
+        src: Pythonansible_project/CA_2.crt
+      - name: Ca_3.crt
+        src: Pythonansible_project/CA_3.crt
+
 
     # Python application details
     app_name: example_app
