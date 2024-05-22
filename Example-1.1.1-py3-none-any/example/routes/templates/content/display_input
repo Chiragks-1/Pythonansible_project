@@ -1,0 +1,4 @@
+{% extends "base.html" %} {% block content %}
+{{ first_name }} {{ last_name }}'s favourite hobby is {{ hobby }}. Wahoo!
+
+{% endblock %}
