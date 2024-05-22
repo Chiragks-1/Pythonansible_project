@@ -1,0 +1,103 @@
+- name: Configure CA certificates and deploy Python application
+  hosts: all
+  become: yes
+  vars:
+    # Custom CA certificates
+    custom_ca_certificates:
+      - name: my_custom_ca_1.crt
+        src: /path/to/my_custom_ca_1.crt
+      - name: my_custom_ca_2.crt
+        src: /path/to/my_custom_ca_2.crt
+
+    # Python application details
+    app_name: example_app
+    dest_dir: /opt/example
+    venv_dir: /opt/example/venv
+    wheel_file: Example-1.1.1-py3-none-any/example/
+    #app_requirements: requirements.txt
+
+  tasks:
+    - name: Install ca-certificates package
+      package:
+        name: ca-certificates
+        state: present
+
+    - name: Copy custom CA certificates to the system trust store
+      copy:
+        src: "{{ item.src }}"
+        dest: "/usr/local/share/ca-certificates/{{ item.name }}"
+        owner: root
+        group: root
+        mode: 0644
+      with_items: "{{ custom_ca_certificates }}"
+
+    - name: Update CA certificates (Debian)
+      command: update-ca-certificates
+      when: ansible_facts['os_family'] == 'Debian'
+
+    - name: Update CA certificates (RedHat)
+      command: /usr/bin/update-ca-trust
+      when: ansible_facts['os_family'] == 'RedHat'
+
+    - name: Ensure application directory exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Ensure virtual environment directory exists
+      file:
+        path: "{{ venv_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Install Python 3 and virtualenv
+      package:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+        state: present
+
+    - name: Create virtual environment
+      command: python3 -m venv {{ venv_dir }}
+      args:
+        creates: "{{ venv_dir }}/bin/activate"
+
+    
+    - name: Create destination directory
+      ansible.builtin.file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+    - name: Upload the wheel file to the target machine
+      ansible.builtin.copy:
+        src: "{{ wheel_file }}"
+        dest: "{{ dest_dir }}/{{ wheel_file }}"
+        mode: '0644'
+
+    - name: Install the application from the wheel file
+      ansible.builtin.command:
+        cmd: "pip3 install {{ dest_dir }}/{{ wheel_file }}"
+
+    - name: Verify installation
+      ansible.builtin.command:
+        cmd: "pip3 show your_application"
+      register: pip_show_output
+
+    - name: Debug pip show output
+      ansible.builtin.debug:
+        msg: "{{ pip_show_output.stdout }}"
+
+    - name: Ensure the application start script is executable
+      file:
+        path: "{{ wheel_file }}/start.sh"
+        state: file
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      # Ensure you 
+
+    
